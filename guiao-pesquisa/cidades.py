@@ -9,6 +9,7 @@
 
 
 from tree_search import *
+import math
 
 class Cidades(SearchDomain):
     def __init__(self,connections, coordinates):
@@ -35,7 +36,9 @@ class Cidades(SearchDomain):
                 return cost
             
     def heuristic(self, state, goal_state):
-        pass
+        pos1_x, pos1_y = self.coordinates[state]
+        pos2_x, pos2_y = self.coordinates[goal_state]
+        return math.hypot(pos1_x - pos2_x, pos1_y - pos2_y)
 
 cidades_portugal = Cidades( 
                     # Ligacoes por estrada
@@ -103,8 +106,10 @@ cidades_portugal = Cidades(
 
 
 
-p = SearchProblem(cidades_portugal,'Aveiro','Faro')
-t = SearchTree(p,'uniform')
+p = SearchProblem(cidades_portugal,'Viseu','Faro')
+t1 = SearchTree(p,'uniform')
+t2 = SearchTree(p,'greedy')
+t3 = SearchTree(p,'A*')
 
 # Atalho para obter caminho de c1 para c2 usando strategy:
 def search_path(c1,c2,strategy):
@@ -115,7 +120,14 @@ def search_path(c1,c2,strategy):
 
 
 print('Distancia entre 2 cidades: ', cidades_portugal.cost('Porto', ('Porto', 'Agueda')))
-print(t.search(limit=8),  " | length: ", t.length,  " | terminal: ", t.terminal,
-       " | non terminal", t.non_terminal, " | ram. media: ", t.ram_media, ' | cost: ', t.cost)
+print('uniform: ', t1.search(limit=8),  " | length: ", t1.length,  " | terminal: ", t1.terminal,
+       " | non terminal", t1.non_terminal, " | ram. media: ", t1.ram_media, ' | cost: ', t1.cost, 
+       ' | maior custo no: ', t1.costs, 'depth media: ', t1.depth_media, '\n')
 
+print('greedy: ', t2.search(limit=8),  " | length: ", t2.length,  " | terminal: ", t2.terminal,
+       " | non terminal", t2.non_terminal, " | ram. media: ", t2.ram_media, ' | cost: ', t2.cost, 
+       ' | maior custo no: ', t2.costs, '| depth media: ', t2.depth_media, '\n')
 
+print('A*: ', t3.search(limit=8),  " | length: ", t3.length,  " | terminal: ", t3.terminal,
+       " | non terminal", t3.non_terminal, " | ram. media: ", t3.ram_media, ' | cost: ', t3.cost, 
+       ' | maior custo no: ', t3.costs, '| depth media: ', t3.depth_media, '\n')

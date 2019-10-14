@@ -57,17 +57,19 @@ class SearchProblem:
 
 # Nos de uma arvore de pesquisa
 class SearchNode:
-    def __init__(self,state,parent=None, depth=0, cost=0): 
+    def __init__(self,state,parent=None, depth=0, cost=0, heuristic=0): 
         self.state = state
         self.parent = parent
         self.depth = depth  # Profundidade do no
         self.cost = cost    # Custo acumulado da raiz ate ao no
+        self.heuristic = heuristic
+
         
     def in_parent(self, state):
         if self.parent == None: # Se o parent é none, estamos na root
             return False
-        
-        return self.parent.state == state or self.parent.in_parent(state)
+        # se sol enconrada e aq queremos, return, se n entra na func again
+        return self.parent.state == state or self.parent.in_parent(state) 
     
     def __str__(self):
         return f"no({self.state}, {self.parent}, {self.depth})"
@@ -80,7 +82,7 @@ class SearchTree:
     # construtor
     def __init__(self,problem, strategy='breadth'): 
         self.problem = problem
-        root = SearchNode(problem.initial, None, 0, 0)
+        root = SearchNode(problem.initial, None, 0, 0, self.problem.domain.heuristic(problem.initial, self.problem.goal))
         self.open_nodes = [root]
         self.strategy = strategy
         self.length = 0  # comprimento da soluçao encontrada
@@ -88,6 +90,10 @@ class SearchTree:
         self.non_terminal = 1 # qdo começamos a raiz é nao terminal
         self.ram_media = 0 # Ramificaçao media: ratio entre o num de nós filhos e o num de nós pais
         self.cost = 0
+
+        self.costs = [[0, 'teste']]
+        self.depth_media = 0
+        self.depths = []
 
     # obter o caminho (sequencia de estados) da raiz ate um no
     def get_path(self,node):
@@ -102,7 +108,22 @@ class SearchTree:
         while self.open_nodes != []:
             node = self.open_nodes.pop(0)
             self.cost += node.cost
+            
+            # --------------------------------------------------
+            # Depth media
+            self.depths.append(node.depth)
+            self.depth_media = sum(self.depths)/len(self.depths)
+            # Distancia(s) maior
+            if node.cost > self.costs[0][0]:
+                del self.costs[:]
+                self.costs.append([node.cost, node.state])
+            if node.cost == self.costs[0][0]:
+                self.costs.append([node.cost, node.state])
+            # Se a distancia for igual, adiciona, se for maior apaga array e mete la
+            # --------------------------------------------------
+            
             if self.problem.goal_test(node.state):
+                self.ramification = (self.terminal + self.non_terminal -1) / self.non_terminal
                 return self.get_path(node), node.cost
             lnewnodes = []
             for a in self.problem.domain.actions(node.state):
@@ -114,7 +135,8 @@ class SearchTree:
                     lnewnodes += [SearchNode(newstate,
                                             node,
                                             node.depth+1, 
-                                            node.cost + self.problem.domain.cost(node.state, a))] 
+                                            node.cost + self.problem.domain.cost(node.state, a),
+                                            self.problem.domain.heuristic(newstate, self.problem.goal))]
             self.add_to_open(lnewnodes)
             if lnewnodes == []: # Se n tiver new nodes entao é terminal
                 self.terminal += 1 
@@ -134,4 +156,7 @@ class SearchTree:
             self.open_nodes[:0] = lnewnodes #[:0] c/ os : ele insere na pos 0 s/ apagar, insert x   
         elif self.strategy == 'uniform':
             self.open_nodes = sorted(self.open_nodes + lnewnodes, key=lambda no: no.cost)
-
+        elif self.strategy == 'greedy':
+            self.open_nodes = sorted(self.open_nodes + lnewnodes, key=lambda no: no.heuristic)
+        elif self.strategy == 'A*':
+            self.open_nodes = sorted(self.open_nodes + lnewnodes, key=lambda no: no.cost + no.heuristic)
