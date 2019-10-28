@@ -128,7 +128,6 @@ class SemanticNetwork:
                         if isinstance(d.relation, Association) and (d.relation.entity1 == entity or d.relation.entity2 == entity)  
                         ] ))
 
-
     # 9 - dadas duas entidades (dois tipos, ou um tipo e um objecto), 
     # devolva True se a primeira for predecessora da segunda, e False caso contrário.
     def predecessor(self, A, B):
@@ -139,6 +138,65 @@ class SemanticNetwork:
             return True
 
         return any([self.predecessor(A, r.entity2) for r in rel])
+
+    # 10 - dadas duas entidades (dois tipos, ou um tipo e um objecto), 
+    # em que a primeira é predecessora da segunda, devolva uma lista composta pelas entidades 
+    # encontradas no caminho desde a primeira até à segunda entidade. Caso a primeira entidade 
+    # não seja predecessora da segunda, a função retorna None.
+    def predecessor_path(self, A, B):
+        # Subtype('mamifero','vertebrado') -> Subtype('homem','mamifero') -> Member('socrates','homem')
+
+        # Predecessores diretos        
+        direct_predecessor = [d.relation for d in self.declarations if (isinstance(d.relation, Member) or isinstance(d.relation, Subtype))
+                and d.relation.entity1 == B]
+
+        # Se for direto
+        if [r for r in direct_predecessor if r.entity2 == A] != []:
+            return [A,B]
+
+        # Recursivamente continua a procura do caminho        
+        for p in direct_predecessor:
+            pp = self.predecessor_path(A, p.entity2)
+            if pp:
+                return pp + [B]
+        # Se nao encontrar nenhum
+        return None # Se n for predecessor
+            
+    # 11a - obter todas as declarações de associações locais ou herdadas por uma entidade. 
+    # A função recebe como entrada a entidade e, opcionalmente, o nome da associação.
+    def query(self, entity, association = None):
+        inherited = [self.query(d.relation.entity2, association) for d in self.declarations if d.relation.entity1 == entity and 
+                    (isinstance(d.relation, Member) or isinstance(d.relation, Subtype))]
+        return [item for sublist in inherited for item in sublist] + [d for d in self.declarations 
+                if d.relation.entity1 == entity and isinstance(d.relation, Association) and (association == None or d.relation.name == association)]
+
+    # 11b - obter todas as declarações locais (incluindo Member e Subtype) ou herdadas (apenas Association)por uma entidade.
+    def query2(self, entity, relation = None):
+        inherited = [self.query2(d.relation.entity2, relation) for d in self.declarations if d.relation.entity1 == entity and 
+                    (isinstance(d.relation, Member) or isinstance(d.relation, Subtype))]
+
+        return [item for sublist in inherited for item in sublist
+                if not (isinstance(item.relation, Member) or  isinstance(item.relation, Subtype))] + [d for d in self.declarations 
+                if d.relation.entity1 == entity and (relation == None or d.relation.name == relation)]
+
+    # 12 - associação está declarada numa entidade, a entidade não herdará essa associação das entidades predecessoras
+    def query_cancel(self, entity, association):
+        inherited = [self.query_cancel(d.relation.entity2, association) for d in self.declarations if d.relation.entity1 == entity and 
+                    (isinstance(d.relation, Member) or isinstance(d.relation, Subtype))]
+        
+        local = [d for d in self.declarations if d.relation.entity1 == entity 
+                and (association == None or d.relation.name == association)]
+        
+        local_rels = [l.relation.name for l in local]
+
+        return [item for sublist in inherited for item in sublist if not item.relation.name in local_rels] + local
+
+    # 13 - lista com todas as declarações dessa associação em entidades descendentes desse tipo
+    def query_down(self, entity, association):
+        descendents = [self.query_down(d.relation.entity1, association) for d in self.declarations if d.relation.entity2 == entity 
+                        and (isinstance(d.relation, Member) or isinstance(d.relation, Subtype))]
+        return [item for sublist in descendents for item in sublist] + [d for d in self.declarations
+                if d.relation.entity2 == entity and d.relation.name == association and isinstance(d.relation, Association)]
 
 # Funcao auxiliar para converter para cadeias de caracteres
 # listas cujos elementos sejam convertiveis para

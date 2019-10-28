@@ -89,7 +89,14 @@ print('list association: ', z.list_associations(),
 '\n\ncount_association_user de descartes: ', z.count_association_user('descartes'),
 '\n\nlist_associations_entities de socrates: ', z.list_associations_entities('socrates'),
 '\n\npredecessor (vertebrado, socrates) : ', z.predecessor('vertebrado', 'socrates'),
-'\n\npredecessor (vertebrado, filosofo) : ', z.predecessor('vertebrado', 'filosofo')
+'\n\npredecessor (vertebrado, filosofo) : ', z.predecessor('vertebrado', 'filosofo'),
+'\n\npredecessor_path (vertebrado, socrates): ', z.predecessor_path ('vertebrado', 'socrates',),
+'\n\nquery (socrates, altura): ', z.query('socrates', 'altura'),
+'\n\nquery2 (homem, mamar): ', z.query2 ('homem', 'mamar'),
+'\n\nquery2 (homem): ', z.query2 ('homem'),
+'\n\nquery_cancel (socrates, altura): ', z.query_cancel('socrates', 'altura'),
+'\n\nquery_down (mamifero, altura): ', z.query_down ('mamifero', 'altura')
+
 )
 #print(z)
 

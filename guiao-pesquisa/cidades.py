@@ -15,6 +15,7 @@ class Cidades(SearchDomain):
     def __init__(self,connections, coordinates):
         self.connections = connections
         self.coordinates = coordinates
+# verificar se em cada uma dessas 4 posiçoes
     def actions(self,cidade):
         actlist = []
         for (C1,C2,D) in self.connections:
@@ -27,6 +28,7 @@ class Cidades(SearchDomain):
         (C1,C2) = action
         if C1==cidade:
             return C2
+ 
     def cost(self, state, action):
         orig, dest = action
         if state != orig:
@@ -34,6 +36,7 @@ class Cidades(SearchDomain):
         for a,b,cost in self.connections:
             if (a, b) == action or (b,a) == action:
                 return cost
+	# return 1
             
     def heuristic(self, state, goal_state):
         pos1_x, pos1_y = self.coordinates[state]
