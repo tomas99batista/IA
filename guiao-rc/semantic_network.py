@@ -196,7 +196,7 @@ class SemanticNetwork:
         descendents = [self.query_down(d.relation.entity1, association) for d in self.declarations if d.relation.entity2 == entity 
                         and (isinstance(d.relation, Member) or isinstance(d.relation, Subtype))]
         return [item for sublist in descendents for item in sublist] + [d for d in self.declarations
-                if d.relation.entity2 == entity and d.relation.name == association and isinstance(d.relation, Association)]
+                if d.relation.entity1 == entity and d.relation.name == association and isinstance(d.relation, Association)]
 
 # Funcao auxiliar para converter para cadeias de caracteres
 # listas cujos elementos sejam convertiveis para
