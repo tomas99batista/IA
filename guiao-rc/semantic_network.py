@@ -1,3 +1,5 @@
+from collections import Counter 
+
 # Guiao de representacao do conhecimento
 # -- Redes semanticas
 # 
@@ -28,6 +30,17 @@ class Relation:
 class Association(Relation):
     def __init__(self,e1,assoc,e2):
         Relation.__init__(self,e1,assoc,e2)
+
+# Devolve um par (val, f req), em que val é o valor local mais frequente, e freq é a frequência (percentagem) com que ocorre.
+class AssocOne(Association):
+    def __init__(self, e1, assoc ,e2):
+        Relation.__init__(self, e1, assoc, e2)
+
+# Devolve a média dos valores locais.
+class AssocNum(Association):
+    def __init__(self, e1, assoc ,e2):
+        num = float(e2)
+        Relation.__init__(self, e1, assoc, e2)
 
 #   Exemplo:
 #   a = Association('socrates','professor','filosofia')
@@ -127,8 +140,8 @@ class SemanticNetwork:
         return list(set([ (d.relation.name, d.user) for d in self.declarations 
                         if isinstance(d.relation, Association) and (d.relation.entity1 == entity or d.relation.entity2 == entity)  
                         ] ))
-
     # 9 - dadas duas entidades (dois tipos, ou um tipo e um objecto), 
+
     # devolva True se a primeira for predecessora da segunda, e False caso contrário.
     def predecessor(self, A, B):
         rel = [d.relation for d in self.declarations if (isinstance(d.relation, Member) or isinstance(d.relation, Subtype))
@@ -197,6 +210,48 @@ class SemanticNetwork:
                         and (isinstance(d.relation, Member) or isinstance(d.relation, Subtype))]
         return [item for sublist in descendents for item in sublist] + [d for d in self.declarations
                 if d.relation.entity1 == entity and d.relation.name == association and isinstance(d.relation, Association)]
+
+    # 14 - dado um tipo e (o nome de) uma associação, devolva o valor mais frequente dessa associação nas entidades descendentes.
+    def query_induce(self, entity, association):
+        c = Counter([d.relation.entity2 for d in self.query_down(entity, association)])
+        # Se for vazio nem entra no for
+        for m in c.most_common(1):
+            return m[0]
+
+    # 15 - consultas de valores das associações locais de uma dada entidade
+    def query_local_assoc(self, entity, relation):
+        # Vai buscar as locais
+        local_decl = self.query_local(e1=entity, rel=relation)
+        # Se existe local_decl, se n existir nada n faz sentido ir
+        
+        # AssocOne
+        if len(local_decl) and isinstance(local_decl[0].relation, AssocOne):
+            counter = Counter([l.relation.entity2 for l in local_decl])
+            return [(e, c/len(local_decl)) for e,c in counter.most_common(1) ]
+        
+        # AssocNum        
+        elif len(local_decl) and isinstance(local_decl[0].relation, AssocNum):
+            return sum([l.relation.entity2 for l in local_decl])/len(local_decl)
+        
+        else:
+            counter = Counter([l.relation.entity2 for l in local_decl])
+            fsum = 0
+            valfrq = []
+            for e,c in counter.items():
+                if fsum < 0.75:
+                    valfrq.append((e,c/len(local_decl)))
+                    fsum += c/len(local_decl)
+            return valfrq
+
+    # 16 - dada uma entidade, E, e (o nome de) uma associação, A, devolva o valor, V , dessa associação nessa entidade
+    # - Se todas as declarações locais de A em E atribuem o mesmo valor, V , à associação, 
+    #       então é retornado esse valor, não levando em conta os valores eventualmente herdados.
+    # - Caso contrário, retorna-se o valor, V , que maximiza a seguinte função:
+    #       F (E, A, V) = ( L(E, A, V) + H(E, A, V)) / 2
+    #       . L(E, A, V) é a percentagem de declarações de V para A na entidade E
+    #       . H(E, A, V) é a percentagem de declarações similares nas entidades predecessoras de E
+    def query_assoc_value(self, entity, association):
+        pass
 
 # Funcao auxiliar para converter para cadeias de caracteres
 # listas cujos elementos sejam convertiveis para
