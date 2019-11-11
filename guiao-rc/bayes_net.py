@@ -24,6 +24,18 @@ class BayesNet:
                     prob*=(p if val else 1-p)
         return prob
 
+    def indivProb(self, var, val):
+        return sum([self.jointProb(c) for c in [c for c in self.gen_conjuctions(list(self.dependencies.keys())) if (var, val) in c]])
+
+    def gen_conjuctions(self, variables):
+        if len(variables) == 1:
+            return [(variables[0], True)], [(variables[0], False)]
+        remain = self.gen_conjuctions(variables[1:])
+        l = []
+        for r in remain:
+            l.append(r + [(variables[0], True)])
+            l.append(r + [(variables[0], False)])
+        return l
 
 # Footnote 1:
 # Default arguments are evaluated on function definition,
